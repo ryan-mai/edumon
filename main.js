@@ -1,0 +1,6 @@
+import kaplay from "https://unpkg.com/kaplay@3001.0.19/dist/kaplay.mjs";
+kaplay({
+    width: 1280,
+    height: 720,
+    scale: 0.7
+});
