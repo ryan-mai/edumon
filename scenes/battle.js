@@ -33,7 +33,7 @@ function setBattle(worldState) {
     tween(enemyMonHealthBox.pos.x, 100, 0.3, (val) => enemyMonHealthBox.pos.x = val, easings.easeInSine);
 
     const box = add([rect(1300, 300), outline(4), pos(-2, 530)]);
-    const content = box.add([text('MUSHROOM is fired up to gamble!', {size: 42}), color(10, 10, 10), pos(20, 20)])
+    const content = box.add([text('MUSHROOM is fired up to gamble!', {size: 32}, {lineSpacing: 8}), color(10, 10, 10), pos(20, 20)])
 
     // tween(box.pos.y, 530, 0.3, (val) => box.pos.y = val, easings.easeInSine);
 
@@ -58,32 +58,80 @@ function setBattle(worldState) {
                 }
             },
             easings.easeInBounce
-        )
+        );
     }
+
     function getRandomIntInclusive(min, max) {
         const minCeiled = Math.ceil(min);
         const maxFloored = Math.floor(max);
         return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled); 
     }
+
+    
     let phase = 'player-selection'
     let attack = 0;
+
+    const menuOptions = ['Blackjack', 'Roulette', 'Slots'];
+    let menuActive = false;
+    let selectedMenu = 0;
+    function renderMenu() {
+        return menuOptions
+            .map((option, idx) => (idx === selectedMenu ? `> ${option}` : ` ${option}`))
+            .join('\n');
+    }
+    onKeyPress('w', () => {
+        if (!menuActive) return
+        selectedMenu = (selectedMenu - 1 + menuOptions.length) % menuOptions.length;
+        content.text = renderMenu();
+    });
+    onKeyPress('s', () => {
+        if (!menuActive) return
+        selectedMenu = (selectedMenu + 1 + menuOptions.length) % menuOptions.length;
+        content.text = renderMenu();
+    });
+
+    function flashScreen() {
+        const flash = add([rect(1280, 720), color(10, 10, 10), fixed(), opacity(0)]);
+        tween(flash.opacity, 1, 0.5, (val) => flash.opacity = val, easings.easeInBounce);
+    }
+
+    function gameStart(type, attack, coins, worldState) {
+        flashScreen();
+        setTimeout(() => {
+            worldState.playerCoins = coins;
+            worldState.attack = attack;
+            go(type, worldState);
+        }, 1500);
+    }
     onKeyPress('space', () => {
         if (playerMon.fainted || enemyMon.fainted) return;
         
         if (phase === 'player-selection') {
-            let cost = getRandomIntInclusive(0, 3);
-            content.text = `> Tackle for ${cost} coins?`;
-            if (playerCoins > cost) {
+            if (!menuActive) {
+                menuActive = true;
+                selectedMenu = 0;
+                content.text = renderMenu();
+                return;
+            }
+
+            const choice = menuOptions[selectedMenu];
+            menuActive = false;
+            content.text = `Playing ${choice.toLowerCase()}...`;
+
+            if (choice === 'Blackjack') {
                 attack = Math.random() * 150;
+                gameStart('blackjack', attack, playerCoins, worldState);
+
+            } else if (choice === 'Roulette') {
+                attack = getRandomIntInclusive(-50, 150);
             } else {
-                attack = getRandomIntInclusive(-250, 200);
-                let debt = cost - playerCoins;
-                content.text = `> Scratch for ${debt} coins?`;
+                attack = getRandomIntInclusive(0, 200);
             }
             phase = 'player-turn';
             return;
         }
 
+        debug.log(attack)
         if (phase === 'player-turn') {
             content.text = `${attack}`;
             if (attack > 100) {
