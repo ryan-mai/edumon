@@ -7,9 +7,9 @@ kaplay({
 
 setBackground(Color.fromHex('#36A6E0'))
 
-loadAssets()
+loadAssets();
 
-scene('world', (worldState) => setWorld(worldState))
-scene('battle', (worldState) => setBattle(worldState))
+scene('world', (worldState) => setWorld(worldState));
+scene('battle', (worldState) => setBattle(worldState));
 
-go('world')
+go('world');

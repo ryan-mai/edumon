@@ -3,6 +3,8 @@ function setWorld(worldState) {
         return [sprite('tile'), {type}]
     }
 
+    let coins = 0;
+
     const map = [
         addLevel(
             [
@@ -147,10 +149,11 @@ function setWorld(worldState) {
         {currentSprite: 'player-down', speed: 300, isInDialogue: false}
     ]);
 
-    const up_keys = ['up', 'w']
-    const down_keys = ['down', 's']
-    const left_keys = ['left', 'a']
-    const right_keys = ['right', 'd']
+    const coin = add([sprite('coin'), pos(400, 400), scale(0.03), area(), body({isStatic: true}), 'coin']);
+    if (coin) {
+        console.log(coin);
+    }
+
     let tick = 0
 
     const keyDirMap = {
@@ -250,6 +253,12 @@ function setWorld(worldState) {
             }
         });
     });
+
+    player.onCollide('coin', (c) => {
+        destroy(c);
+        coins += 1;
+        console.log(coins)
+    })
 
     function flashScreen() {
         const flash = add([rect(1280, 720), color(10, 10, 10), fixed(), opacity(0)]);
