@@ -27,7 +27,7 @@ function loadAssets() {
       anims: { spider: 1, centipede: 2, grass: 3 },
     },
   });
-  loadSprite("battle-background", "./assets/battleBackground.png");
+  loadSprite("battle-background", "./assets/battle-background.png");
   loadSpriteAtlas("./assets/tiles.png", {
     tile: {
       x: 0,

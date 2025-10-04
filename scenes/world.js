@@ -170,7 +170,7 @@ function setWorld(worldState) {
     }
     
     onUpdate(() => {
-        camPos(player.pos)
+        setCamPos(player.pos)
         tick++
         const isMoving = activeDir !== null;
         if (isMoving && tick % 20 === 0 && !player.isInDialogue) {
@@ -224,5 +224,49 @@ function setWorld(worldState) {
 
     player.onCollide('npc', () => {
         player.isInDialogue = true;
-    })
+        const dialogueBoxFixedContainer = add([fixed()])
+        const dialogueBox = dialogueBoxFixedContainer.add([rect(1000, 200), outline(5), pos(150, 500), fixed()])
+        const dialogue = "You! Risk your coins or go away..."
+        const content = dialogueBox.add([
+            text('', { size: 42, width: 900, lineSpacing: 15}),
+            color(10, 10, 10),
+            pos(40, 30),
+            fixed()
+        ]);
+
+        if (worldState.faintedMon.length < 4) {
+            content.text = dialogue
+        } else {
+            content.text = "Nice, now gamble the rest of yours coins away..."
+        }
+
+        onUpdate(() => {
+            if (isKeyDown('space')) {
+                destroy(dialogueBox);
+                player.isInDialogue = false;
+            }
+        });
+    });
+
+    function flashScreen() {
+        const flash = add([rect(1280, 720), color(10, 10, 10), fixed(), opacity(0)]);
+        tween(flash.opacity, 1, 0.5, (val) => flash.opacity = val, easings.easeInBounce);
+    }
+
+    function onCollideWithPlayer(enemyName, player, worldState) {
+        player.onCollide(enemyName, () => {
+            flashScreen();
+            setTimeout(() => {
+                worldState.playerPos = player.pos;
+                worldState.enemyName = enemyName;
+                go('battle', worldState);
+            }, 1500);
+        });
+    }
+
+    onCollideWithPlayer('cat', player, worldState);
+    onCollideWithPlayer('spider', player, worldState);
+    onCollideWithPlayer('centipede', player, worldState);
+    onCollideWithPlayer('grass', player, worldState);
+
 }
