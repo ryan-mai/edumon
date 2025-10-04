@@ -16,7 +16,7 @@ function setBattle(worldState) {
     
     playerMonHealthBox.add([rect(370, 10), color(0, 200, 0), pos(15, 50)]);
     
-    const playerMonHealthBar = playerMonHealthBox.add([rect(370, 10), color(0, 200, 0), pos(15, 50)]);
+    const playerMonHealthBar = playerMonHealthBox.add([rect(370, 10), color(200, 200, 200), pos(15, 50)]);
 
     tween(playerMonHealthBox.pos.x, 850, 0.3, (val) => playerMonHealthBox.pos.x = val, easings.easeInSine);
 
@@ -24,7 +24,38 @@ function setBattle(worldState) {
 
     enemyMonHealthBox.add([text(`${(worldState.enemyName).toUpperCase()}MON`, {size: 32}), color(10, 10, 10), pos(10, 10)]);
 
-    enemyMonHealthBox.add([rect(370, 10), color(200, 200, 200), pos(15, 50)]);
+    enemyMonHealthBox.add([rect(370, 10), color(0, 200, 0), pos(15, 50)]);
 
+    const enemyMonHealthBar = enemyMonHealthBox.add([rect(370, 10), color(200, 200, 200), pos(15, 50)]);
+    
     tween(enemyMonHealthBox.pos.x, 100, 0.3, (val) => enemyMonHealthBox.pos.x = val, easings.easeInSine);
+
+    const box = add([rect(1300, 300), outline(4), pos(-2, 530)]);
+    const content = box.add([text('MUSHROOM is fired up to gamble!', {size: 42}), color(10, 10, 10), pos(20, 20)])
+
+    // tween(box.pos.y, 530, 0.3, (val) => box.pos.y = val, easings.easeInSine);
+
+    function reduceHealth(healthBar, damageDealt) {
+        tween(
+            healthBar.width,
+            healthBar.width - damageDealt,
+            0.5,
+            (val) => healthBar.width = val, easings.easeInSine
+        );
+    }
+
+    function damageEffect(mon) {
+        tween(
+            mon.opacity,
+            0,
+            0.3,
+            (val) => {
+                mon.opacity = val;
+                if (mon.opacity === 0) {
+                    mon.opacity = 1;
+                }
+            },
+            easings.easeInBounce
+        )
+    }
 }
