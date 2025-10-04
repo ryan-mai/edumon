@@ -48,7 +48,7 @@ function setWorld(worldState) {
         }),
         addLevel(
         [
-            "      12       ",
+            "      12    7  ",
             "      34       ",
             " 000    00  12 ",
             " 00   00    34 ",
@@ -59,7 +59,7 @@ function setWorld(worldState) {
             "     5         ",
             "     6   0     ",
             "               ",
-            "               ",
+            "           7   ",
             "               ",
         ],
         {
@@ -73,6 +73,8 @@ function setWorld(worldState) {
             4: () => makeTile("bigtree-pt4"),
             5: () => makeTile("tree-t"),
             6: () => makeTile("tree-b"),
+            //Idk why but the coin is invisible :(
+            7: () => [ sprite('coin'), area(), body({ isStatic: true }), opacity(1), 'coin' ],
             },
         }),
         addLevel(
@@ -149,10 +151,11 @@ function setWorld(worldState) {
         {currentSprite: 'player-down', speed: 300, isInDialogue: false}
     ]);
 
-    const coin = add([sprite('coin'), pos(400, 400), scale(0.03), area(), body({isStatic: true}), 'coin']);
-    if (coin) {
-        console.log(coin);
-    }
+    const coinsLabel = add([
+        text(coins),
+        pos(24, 24),
+        fixed(),
+    ]);
 
     let tick = 0
 
@@ -228,11 +231,13 @@ function setWorld(worldState) {
         }
     }
 
+    let firstTime = true;
+
     player.onCollide('npc', () => {
         player.isInDialogue = true;
         const dialogueBoxFixedContainer = add([fixed()])
         const dialogueBox = dialogueBoxFixedContainer.add([rect(1000, 200), outline(5), pos(150, 500), fixed()])
-        const dialogue = "You! Risk your coins or go away..."
+        const dialogue = "You! Go gamble your money... It's worth it!"
         const content = dialogueBox.add([
             text('', { size: 42, width: 900, lineSpacing: 15}),
             color(10, 10, 10),
@@ -247,6 +252,15 @@ function setWorld(worldState) {
         }
 
         onUpdate(() => {
+            onClick(() => {
+                if (firstTime) {
+                    firstTime = false;
+                    coins += 3;
+                    coinsLabel.text = `${coins}`
+                }
+                destroy(dialogueBox);
+                player.isInDialogue = false;
+            })
             if (isKeyDown('space')) {
                 destroy(dialogueBox);
                 player.isInDialogue = false;
@@ -257,7 +271,25 @@ function setWorld(worldState) {
     player.onCollide('coin', (c) => {
         destroy(c);
         coins += 1;
-        console.log(coins)
+        coinsLabel.text = `${coins}`;
+        player.isInDialogue = true;
+        const dialogueBoxFixedContainer = add([fixed()])
+        const dialogueBox = dialogueBoxFixedContainer.add([rect(1000, 200), outline(5), pos(150, 500), fixed()])
+        const dialogue = 'You found a coin!'
+        const content = dialogueBox.add([
+            text('', { size: 42, width: 900, lineSpacing: 15}),
+            color(10, 10, 10),
+            pos(40, 30),
+            fixed()
+        ]);
+        content.text = dialogue;
+
+        onUpdate(() => {
+            onClick(() => {
+                destroy(dialogueBox);
+                player.isInDialogue = false;
+            })
+        })
     })
 
     function flashScreen() {
@@ -269,6 +301,7 @@ function setWorld(worldState) {
         player.onCollide(enemyName, () => {
             flashScreen();
             setTimeout(() => {
+                worldState.coins = coins;
                 worldState.playerPos = player.pos;
                 worldState.enemyName = enemyName;
                 go('battle', worldState);

@@ -20,6 +20,8 @@ function setBattle(worldState) {
 
     tween(playerMonHealthBox.pos.x, 850, 0.3, (val) => playerMonHealthBox.pos.x = val, easings.easeInSine);
 
+    let playerCoins = worldState.coins;
+
     const enemyMonHealthBox = add([rect(400, 100), outline(4), pos(850, 50)]);
 
     enemyMonHealthBox.add([text(`${(worldState.enemyName).toUpperCase()}MON`, {size: 32}), color(10, 10, 10), pos(10, 10)]);
@@ -58,46 +60,61 @@ function setBattle(worldState) {
             easings.easeInBounce
         )
     }
-
+    function getRandomIntInclusive(min, max) {
+        const minCeiled = Math.ceil(min);
+        const maxFloored = Math.floor(max);
+        return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled); 
+    }
     let phase = 'player-selection'
-    
+    let attack = 0;
     onKeyPress('space', () => {
-        if (playerMon.fainted || enemyMon.fainted) return
-
+        if (playerMon.fainted || enemyMon.fainted) return;
+        
         if (phase === 'player-selection') {
-            content.text = '> Tackle';
+            let cost = getRandomIntInclusive(0, 3);
+            content.text = `> Tackle for ${cost} coins?`;
+            if (playerCoins > cost) {
+                attack = Math.random() * 150;
+            } else {
+                attack = getRandomIntInclusive(-250, 200);
+                let debt = cost - playerCoins;
+                content.text = `> Scratch for ${debt} coins?`;
+            }
             phase = 'player-turn';
-            return
+            return;
         }
 
         if (phase === 'player-turn') {
-            content.text = `MUSHY attacks!`
-            const damageDealt = Math.random() * 150
-
-            if (damageDealt > 100) {
-                content.text = 'It\'s a critical hit!'
+            content.text = `${attack}`;
+            if (attack > 100) {
+                content.text = "It's a critical hit!";
             }
-
-            reduceHealth(enemyMonHealthBar, damageDealt);
+            if (enemyMonHealthBar.width - attack > 400) {
+                content.text = `${(worldState.enemyName).toUpperCase()}MON thanks you for the healing!`;
+                tween(
+                    enemyMonHealthBar.width,
+                    370,
+                    0.5,
+                    (val) => enemyMonHealthBar.width = val, easings.easeInSine
+                );
+            } else {
+                reduceHealth(enemyMonHealthBar, attack);
+            }
             damageEffect(enemyMon);
-
             phase = 'enemy-turn';
-            return
+            return;
         }
 
         if (phase === 'enemy-turn') {
-            content.text = `${(worldState.enemyName).toUpperCase()}MON attacks!`
-            const damageDealt = Math.random() * 150
-
-            if (damageDealt > 100) {
-                content.text = 'It\'s a critical hit!'
+            content.text = `${(worldState.enemyName).toUpperCase()}MON attacks!`;
+            const Attack = Math.random() * 100;
+            if (Attack > 67) {
+                content.text = "It's a critical hit!";
             }
-
-            reduceHealth(playerMonHealthBar, damageDealt);
+            reduceHealth(playerMonHealthBar, Attack);
             damageEffect(playerMon);
-
             phase = 'player-selection';
-            return
+            return;
         }
     });
 
