@@ -219,7 +219,10 @@ function setWorld(worldState) {
     player.pos = vec2(worldState.playerPos)
 
     for (const faintedMon of worldState.faintedMons) {
-        destroy(get(faintedMon[0]))
+        const enemy = get(faintedMon);
+        for (const entities of enemy) {
+            destroy(entities);
+        }
     }
 
     player.onCollide('npc', () => {
@@ -234,7 +237,7 @@ function setWorld(worldState) {
             fixed()
         ]);
 
-        if (worldState.faintedMon.length < 4) {
+        if (worldState.faintedMon < 4) {
             content.text = dialogue
         } else {
             content.text = "Nice, now gamble the rest of yours coins away..."

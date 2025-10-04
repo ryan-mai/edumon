@@ -14,9 +14,9 @@ function setBattle(worldState) {
 
     playerMonHealthBox.add([text('MUSHY', {size: 32}), color(10, 10, 10), pos(10, 10)]);
     
-    playerMonHealthBox.add([rect(370, 10), color(0, 200, 0), pos(15, 50)]);
+    playerMonHealthBox.add([rect(370, 10), color(200, 200, 200), pos(15, 50)]);
     
-    const playerMonHealthBar = playerMonHealthBox.add([rect(370, 10), color(200, 200, 200), pos(15, 50)]);
+    const playerMonHealthBar = playerMonHealthBox.add([rect(370, 10), color(0, 200, 0), pos(15, 50)]);
 
     tween(playerMonHealthBox.pos.x, 850, 0.3, (val) => playerMonHealthBox.pos.x = val, easings.easeInSine);
 
@@ -24,9 +24,9 @@ function setBattle(worldState) {
 
     enemyMonHealthBox.add([text(`${(worldState.enemyName).toUpperCase()}MON`, {size: 32}), color(10, 10, 10), pos(10, 10)]);
 
-    enemyMonHealthBox.add([rect(370, 10), color(0, 200, 0), pos(15, 50)]);
+    enemyMonHealthBox.add([rect(370, 10), color(200, 200, 200), pos(15, 50)]);
 
-    const enemyMonHealthBar = enemyMonHealthBox.add([rect(370, 10), color(200, 200, 200), pos(15, 50)]);
+    const enemyMonHealthBar = enemyMonHealthBox.add([rect(370, 10), color(0, 200, 0), pos(15, 50)]);
     
     tween(enemyMonHealthBox.pos.x, 100, 0.3, (val) => enemyMonHealthBox.pos.x = val, easings.easeInSine);
 
@@ -58,4 +58,100 @@ function setBattle(worldState) {
             easings.easeInBounce
         )
     }
+
+    let phase = 'player-selection'
+    
+    onKeyPress('space', () => {
+        if (playerMon.fainted || enemyMon.fainted) return
+
+        if (phase === 'player-selection') {
+            content.text = '> Tackle';
+            phase = 'player-turn';
+            return
+        }
+
+        if (phase === 'player-turn') {
+            content.text = `MUSHY attacks!`
+            const damageDealt = Math.random() * 150
+
+            if (damageDealt > 100) {
+                content.text = 'It\'s a critical hit!'
+            }
+
+            reduceHealth(enemyMonHealthBar, damageDealt);
+            damageEffect(enemyMon);
+
+            phase = 'enemy-turn';
+            return
+        }
+
+        if (phase === 'enemy-turn') {
+            content.text = `${(worldState.enemyName).toUpperCase()}MON attacks!`
+            const damageDealt = Math.random() * 150
+
+            if (damageDealt > 100) {
+                content.text = 'It\'s a critical hit!'
+            }
+
+            reduceHealth(playerMonHealthBar, damageDealt);
+            damageEffect(playerMon);
+
+            phase = 'player-selection';
+            return
+        }
+    });
+
+    function colorizeHealthbar(healthBar) {
+        if (healthBar.width < 200) {
+            healthBar.use(color(250, 150, 0));
+        }
+
+        if (healthBar.width < 100) {
+            healthBar.use(color(200, 0, 0));
+        }
+    }
+
+    function makeMonDrop(mon) {
+        tween(
+            mon.pos.y,
+            800,
+            0.5,
+            (val) => mon.pos.y = val,
+            easings.easeInSine,
+        );
+    }
+
+    onUpdate(() => {
+        colorizeHealthbar(playerMonHealthBar);
+        colorizeHealthbar(enemyMonHealthBar);
+
+        if (enemyMonHealthBar.width < 0 && !enemyMon.fainted) {
+            makeMonDrop(enemyMon);
+            content.text = `${(worldState.enemyName).toUpperCase()}MON has fainted!`
+            enemyMon.fainted = true;
+
+            setTimeout(() => {
+                content.text = 'MUSHY has won the battle!';
+            }, 1000);
+
+            setTimeout(() => {
+                worldState.faintedMons.push(worldState.enemyName);
+                go('world', worldState);
+            }, 2000);
+        }
+        else if (playerMonHealthBar.width < 0 && !playerMon.fainted) {
+            makeMonDrop(playerMon);
+            content.text = 'MUSHY has fainted!'
+            playerMon.fainted = true;
+
+            setTimeout(() => {
+                content.text = 'Well, time for a reset!';
+            }, 1000);
+
+            setTimeout(() => {
+                worldState.playerPos = vec2(500, 700);
+                go('world', worldState);
+            }, 2000);
+        }
+    });
 }
