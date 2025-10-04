@@ -141,19 +141,26 @@ function setWorld(worldState) {
     const grassMon = add([sprite('mini-mons'), area(), body({isStatic: true}), pos(900, 570), scale(4), 'grass']);
     grassMon.play('grass');
     
+    const npc = add([sprite('npc'), area(), body({isStatic: true}), pos(600, 700), scale(4), 'npc']);
+
     const player = add([sprite('player-down'), pos(500, 700), scale(4), area(), body(),
         {currentSprite: 'player-down', speed: 300, isInDialogue: false}
     ]);
 
+    const up_keys = ['up', 'w']
+    const down_keys = ['down', 's']
+    const left_keys = ['left', 'a']
+    const right_keys = ['right', 'd']
     let tick = 0
-    onUpdate(() => {
-        camPos(player.pos)
-        tick ++
-        isMoving = isKeyDown(['up', 'down', 'w', 's'])
-        if (isMoving && tick % 20 == 0 && !player.isInDialogue) {
-            player.flipX = !player.flipX
-        }
-    });
+
+    const keyDirMap = {
+        up: 'up', w: 'up',
+        down: 'down', s: 'down',
+        left: 'left', a: 'left',
+        right: 'right', d: 'right',
+    }
+
+    let activeDir = null;
 
     function setSprite(player, spriteName) {
         if (player.currentSprite !== spriteName) {
@@ -161,39 +168,46 @@ function setWorld(worldState) {
             player.currentSprite = spriteName
         }
     }
-    const up_keys = ['up', 'w']
-    const down_keys = ['down', 's']
-    const left_keys = ['left', 'a']
-    const right_keys = ['right', 'd']
+    
+    onUpdate(() => {
+        camPos(player.pos)
+        tick++
+        const isMoving = activeDir !== null;
+        if (isMoving && tick % 20 === 0 && !player.isInDialogue) {
+            player.flipX = !player.flipX
+        }
 
-    onKeyDown(up_keys, () => {
-        if (player.isInDialogue) return
-        setSprite(player, 'player-up')
-        player.move(0, -player.speed)
+        if (!player.isInDialogue && activeDir) {
+            if (activeDir === 'up') {
+                setSprite(player, 'player-up');
+                player.move(0, -player.speed);
+            } else if (activeDir === 'down') {
+                setSprite(player, 'player-down')
+                player.move(0, player.speed);
+            } else if (activeDir === 'left' || activeDir === 'right') {
+                player.flipX = (activeDir === 'right');
+                if (player.curAnim() !== 'walk') {
+                    setSprite(player, 'player-side');
+                    player.play('walk');
+                }
+                player.move(activeDir === 'left' ? -player.speed : player.speed, 0);
+            }
+        }
     });
-    onKeyDown(down_keys, () => {
-        if (player.isInDialogue) return
-        setSprite(player, 'player-down')
-        player.move(0, player.speed)
-    });
-    onKeyDown(left_keys, () => {
-        if (player.isInDialogue) return
-        player.flipX = false
-        if (player.curAnim() !== 'walk') {
-            setSprite(player, 'player-side')
-            player.play('walk')
-        }        
-        player.move(-player.speed, 0)
-    });
-    onKeyDown(right_keys, () => {
-        if (player.isInDialogue) return
-        player.flipX = true
-        if (player.curAnim() !== 'walk') {
-            setSprite(player, 'player-side')
-            player.play('walk')
-        }        
-        player.move(player.speed, 0)
-    });
+
+    for (const key of Object.keys(keyDirMap)) {
+        onKeyDown(key, () => {
+            if (player.isInDialogue) return;
+            if (activeDir) return;
+            activeDir = keyDirMap[key];
+        });
+        onKeyRelease(key, () => {
+            if (keyDirMap[key] === activeDir) {
+                activeDir = null;
+                player.stop();
+            }
+        });
+    }
 
     if (!worldState) {
         worldState = {
@@ -201,8 +215,14 @@ function setWorld(worldState) {
             faintedMons: []
         }
     }
+
     player.pos = vec2(worldState.playerPos)
+
     for (const faintedMon of worldState.faintedMons) {
         destroy(get(faintedMon[0]))
     }
+
+    player.onCollide('npc', () => {
+        player.isInDialogue = true;
+    })
 }
