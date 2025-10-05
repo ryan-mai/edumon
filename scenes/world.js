@@ -1,4 +1,5 @@
 function setWorld(worldState) {
+    setGravity(0);
     function makeTile(type) {
         return [sprite('tile'), {type}]
     }
@@ -152,10 +153,18 @@ function setWorld(worldState) {
     ]);
 
     const coinsLabel = add([
-        text(coins),
-        pos(24, 24),
+        text(coins, {size: 48}),
+        pos(1165, 24),
+        color(255, 215, 0),
         fixed(),
     ]);
+
+    const coinsIcon = add([
+        sprite('coin'),
+        pos(1155 + 48, 24),
+        fixed(),
+        scale(0.04),
+    ])
 
     let tick = 0
 
@@ -237,18 +246,22 @@ function setWorld(worldState) {
         player.isInDialogue = true;
         const dialogueBoxFixedContainer = add([fixed()])
         const dialogueBox = dialogueBoxFixedContainer.add([rect(1000, 200), outline(5), pos(150, 500), fixed()])
-        const dialogue = "You! Go gamble your money... It's worth it!"
+        const dialogue = "You! Make sure you have at least 5 coins to win!"
         const content = dialogueBox.add([
             text('', { size: 42, width: 900, lineSpacing: 15}),
             color(10, 10, 10),
             pos(40, 30),
             fixed()
         ]);
-
-        if (worldState.faintedMon < 4) {
+        if (!worldState.faintedMons) worldState.faintedMons = [];
+        if (worldState.faintedMons.length < 4) {
             content.text = dialogue
         } else {
-            content.text = "Nice, now gamble the rest of yours coins away..."
+            if (worldState.playercoins >= 5) {
+                content.text = "Congrats you won!"
+            } else {
+                content.text = "You are now a homeless comp sci student..."
+            }
         }
 
         onUpdate(() => {
@@ -256,6 +269,7 @@ function setWorld(worldState) {
                 if (firstTime) {
                     firstTime = false;
                     coins += 3;
+                    content.text = 'Here\'s some coins to start your journey!'
                     coinsLabel.text = `${coins}`
                 }
                 destroy(dialogueBox);

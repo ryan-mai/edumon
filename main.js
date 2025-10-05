@@ -12,5 +12,5 @@ loadAssets();
 scene('world', (worldState) => setWorld(worldState));
 scene('battle', (worldState) => setBattle(worldState));
 scene('blackjack', (worldState) => setBlackjack(worldState));
-
+scene('dino', (worldState) => setDino(worldState));
 go('world');

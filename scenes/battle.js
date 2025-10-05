@@ -37,15 +37,30 @@ function setBattle(worldState) {
     tween(enemyMonHealthBox.pos.x, 100, 0.3, (val) => enemyMonHealthBox.pos.x = val, easings.easeInSine);
 
     if (worldState.playerHP !== undefined) playerMonHealthBar.width = worldState.playerHP;
-    if (worldState.enemyHP !== undefined) playerMonHealthBar.width = worldState.enemyHP;
+    if (worldState.enemyHP !== undefined) enemyMonHealthBar.width = worldState.enemyHP; // fixed bug
     
     let pendingReturnedAttack = false;
-    if (worldState.returnFromBlackjack) {
+    if (worldState.returnFromBlackjack || worldState.returnFromDino) {
         pendingReturnedAttack = true;
         worldState.returnFromBlackjack = false;
+        worldState.returnFromDino = false;
     }
 
     let playerCoins = worldState.playerCoins || 0;
+
+    const coinsLabel = add([
+        text(playerCoins, {size: 48}),
+        pos(1165, 24),
+        color(255, 215, 0),
+        fixed(),
+    ]);
+
+    const coinsIcon = add([
+        sprite('coin'),
+        pos(1155 + 48, 24),
+        fixed(),
+        scale(0.04),
+    ])
 
     const box = add([rect(1300, 300), outline(4), pos(-2, 530)]);
     const content = box.add([text('', {size: 32}, {lineSpacing: 8}), color(10, 10, 10), pos(20, 20)])
@@ -88,7 +103,7 @@ function setBattle(worldState) {
         return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled); 
     }
 
-    let menuOptions = ['Blackjack', 'Roulette', 'Slots'];
+    let menuOptions = ['Dino', 'Blackjack', 'More Coming Soon...'];
     if (playerCoins >= 3) {
         if (!menuOptions.includes('Tackle')) menuOptions.push('Tackle');
     } else {
@@ -132,6 +147,19 @@ function setBattle(worldState) {
         }, 500);
     }
 
+    function startDino() {
+        worldState.enemyHP = enemyMonHealthBar.width;
+        worldState.playerHP = playerMonHealthBar.width;
+        worldState.phase = 'player-turn';
+        worldState.playerCoins = playerCoins;
+        worldState.returnFromDino = false;
+        worldState.attack = 0;
+        flashScreen();
+        setTimeout(() => {
+            go('dino', worldState);
+        }, 500);
+    }
+
     function handlePlayerAttack() {
         const dmg = (typeof attack === 'number' && attack !== 0) ? attack : (worldState.attack || 0);
         if (dmg > 100) {
@@ -159,37 +187,43 @@ function setBattle(worldState) {
     
     onKeyPress('space', () => {
         if (playerMon.fainted || enemyMon.fainted) return;
-        
-        if (worldState.returnFromBlackjack && phase === 'player-selection') {
+
+        if (pendingReturnedAttack && phase === 'player-selection') {
             pendingReturnedAttack = false;
             handlePlayerAttack();
             return;
         }
-        
+
         if (phase === 'player-selection') {
             if (!menuActive) {
-                    menuActive = true;
-                    selectedMenu = 0;
-                    content.text = renderMenu();
-                    return;
-                }
+                menuActive = true;
+                selectedMenu = 0;
+                content.text = renderMenu();
+                return;
+            }
 
             const choice = menuOptions[selectedMenu];
             menuActive = false;
-            content.text = `Playing ${choice.toLowerCase()}...`;
+            // content.text = `Playing ${choice.toLowerCase()}...`;
 
             if (choice === 'Blackjack') {
                 attack = getRandomIntInclusive(0, 150);
                 worldState.attack = attack;
                 startBlackjack(attack);
                 return;
-            } else if (choice === 'Roulette') {
-                attack = getRandomIntInclusive(0, 200);
-            } else if (choice === 'Slots') {
-                attack = getRandomIntInclusive(0, 250);
-            } else {
+            } else if (choice === 'Dino') {
+                startDino();
+                return;
+            } else if (choice === 'Tackle') {
                 attack = getRandomIntInclusive(50, 250);
                 coins -= 3;
+                phase = 'player-turn';
+
+            } else {
+                attack = getRandomIntInclusive(0, 150);
+                worldState.attack = attack;
+                startBlackjack(attack);
+                return;
             }
             phase = 'player-turn';
             return;
@@ -248,6 +282,8 @@ function setBattle(worldState) {
 
             setTimeout(() => {
                 worldState.faintedMons.push(worldState.enemyName);
+                worldState.playerHP = 370;
+                worldState.enemyHP = 370;
                 go('world', worldState);
             }, 1600);
         }
@@ -262,6 +298,8 @@ function setBattle(worldState) {
 
             setTimeout(() => {
                 worldState.playerPos = vec2(500, 700);
+                worldState.enemyHP = 370;
+                worldState.playerHP = 370;
                 go('world', worldState);
             }, 1600);
         }
