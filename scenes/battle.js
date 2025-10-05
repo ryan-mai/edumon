@@ -45,7 +45,7 @@ function setBattle(worldState) {
         worldState.returnFromBlackjack = false;
     }
 
-    let playerCoins = worldState.coins || 0;
+    let playerCoins = worldState.playerCoins || 0;
 
     const box = add([rect(1300, 300), outline(4), pos(-2, 530)]);
     const content = box.add([text('', {size: 32}, {lineSpacing: 8}), color(10, 10, 10), pos(20, 20)])
@@ -88,7 +88,14 @@ function setBattle(worldState) {
         return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled); 
     }
 
-    const menuOptions = ['Blackjack', 'Roulette', 'Slots'];
+    let menuOptions = ['Blackjack', 'Roulette', 'Slots'];
+    if (playerCoins >= 3) {
+        if (!menuOptions.includes('Tackle')) menuOptions.push('Tackle');
+    } else {
+        if (menuOptions.length > 3) {
+            menuOptions.pop();
+        }
+    }
     let menuActive = false;
     let selectedMenu = 0;
     function renderMenu() {
@@ -117,7 +124,7 @@ function setBattle(worldState) {
         worldState.playerHP = playerMonHealthBar.width;
         worldState.phase = 'player-turn';
         worldState.attack = damageDealt;
-        worldState.coins = playerCoins;
+        worldState.playerCoins = playerCoins;
         worldState.returnFromBlackjack = false;
         flashScreen();
         setTimeout(() => {
@@ -126,11 +133,14 @@ function setBattle(worldState) {
     }
 
     function handlePlayerAttack() {
-        content.text = `${attack.toFixed(0)} damage!`
-        if (attack > 100) {
-            content.text = "It's a critical hit!";
+        const dmg = (typeof attack === 'number' && attack !== 0) ? attack : (worldState.attack || 0);
+        if (dmg > 100) {
+            content.text = `It's a critical hit! ${dmg.toFixed(0)} damage!`;
+        } else {
+            content.text = `${dmg.toFixed(0)} damage!`;
         }
-        if (enemyMonHealthBar.width - attack > 400) {
+
+        if (enemyMonHealthBar.width - dmg > 400) {
             content.text = `${(worldState.enemyName).toUpperCase()}MON thanks you for healing them!`;
             tween(
                 enemyMonHealthBar.width,
@@ -139,7 +149,7 @@ function setBattle(worldState) {
                 (val) => enemyMonHealthBar.width = val, easings.easeInSine
             );
         } else {
-            reduceHealth(enemyMonHealthBar, attack);
+            reduceHealth(enemyMonHealthBar, dmg);
         }
         damageEffect(enemyMon);
         worldState.attack = 0;
@@ -169,14 +179,17 @@ function setBattle(worldState) {
             content.text = `Playing ${choice.toLowerCase()}...`;
 
             if (choice === 'Blackjack') {
-                attack = getRandomIntInclusive(0, 200);
+                attack = getRandomIntInclusive(0, 150);
                 worldState.attack = attack;
                 startBlackjack(attack);
                 return;
             } else if (choice === 'Roulette') {
-                attack = getRandomIntInclusive(-50, 150);
-            } else {
                 attack = getRandomIntInclusive(0, 200);
+            } else if (choice === 'Slots') {
+                attack = getRandomIntInclusive(0, 250);
+            } else {
+                attack = getRandomIntInclusive(50, 250);
+                coins -= 3;
             }
             phase = 'player-turn';
             return;

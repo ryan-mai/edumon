@@ -3,7 +3,7 @@ function setWorld(worldState) {
         return [sprite('tile'), {type}]
     }
 
-    let coins = 0;
+    let coins = 3;
 
     const map = [
         addLevel(
@@ -301,7 +301,7 @@ function setWorld(worldState) {
         player.onCollide(enemyName, () => {
             flashScreen();
             setTimeout(() => {
-                worldState.coins = coins;
+                worldState.playerCoins = coins;
                 worldState.playerPos = player.pos;
                 worldState.enemyName = enemyName;
                 go('battle', worldState);

@@ -105,6 +105,7 @@ function setBlackjack(worldState) {
         addPlayerCard();
         const total = calculateHandTotal(playerHand);
         content.text = `You drew. Total: ${total}`;
+        if (total == 21) coins += 2;
         if (total >= 21) {
             phase = 'dealer-turn';
             startDealerTurn();
@@ -133,19 +134,21 @@ function setBlackjack(worldState) {
         let msg;
         if (result === 'w') {
             msg = 'You win! Well, you get to attack then!';
+            coins += 3;
         } else if (result === 'l') {
             msg = 'You lose. Better luck next time!';
             attack = 0;
         } else {
             msg = 'Push. The house always wins! :)';
             attack = 0;
+            coins += 1;
         }
         content.text = `${msg} (You ${calculateHandTotal(playerHand)} vs Dealer ${calculateHandTotal(dealerHand)})`;
         wait(1.2, () => {
             worldState.attack = attack;
             worldState.phase = 'player-turn';
             worldState.returnFromBlackjack = true;
-            worldState.coins = coins;
+            worldState.playerCoins = coins;
             go('battle', worldState);
         });
     }
