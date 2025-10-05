@@ -38,6 +38,7 @@ function loadAssets() {
       sliceX: 14,
       sliceY: 4,
       anims: {
+        "A-diamond": 0,
         "2-diamond": 1,
         "3-diamond": 2,
         "4-diamond": 3,

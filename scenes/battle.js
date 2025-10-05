@@ -20,6 +20,7 @@ function setBattle(worldState) {
     playerMonHealthBox.add([rect(370, 10), color(200, 200, 200), pos(15, 50)]);
     
     const playerMonHealthBar = playerMonHealthBox.add([rect(370, 10), color(0, 200, 0), pos(15, 50)]);
+    playerMonHealthBar.width = worldState.playerHP || 370;
 
     tween(playerMonHealthBox.pos.x, 850, 0.3, (val) => playerMonHealthBox.pos.x = val, easings.easeInSine);
 
@@ -31,11 +32,18 @@ function setBattle(worldState) {
     enemyMonHealthBox.add([rect(370, 10), color(200, 200, 200), pos(15, 50)]);
 
     const enemyMonHealthBar = enemyMonHealthBox.add([rect(370, 10), color(0, 200, 0), pos(15, 50)]);
-    
+    enemyMonHealthBar.width = worldState.enemyHP || 370;
+
     tween(enemyMonHealthBox.pos.x, 100, 0.3, (val) => enemyMonHealthBox.pos.x = val, easings.easeInSine);
 
     if (worldState.playerHP !== undefined) playerMonHealthBar.width = worldState.playerHP;
     if (worldState.enemyHP !== undefined) playerMonHealthBar.width = worldState.enemyHP;
+    
+    let pendingReturnedAttack = false;
+    if (worldState.returnFromBlackjack) {
+        pendingReturnedAttack = true;
+        worldState.returnFromBlackjack = false;
+    }
 
     let playerCoins = worldState.coins || 0;
 
@@ -104,15 +112,6 @@ function setBattle(worldState) {
         tween(flash.opacity, 1, 0.5, (val) => flash.opacity = val, easings.easeInBounce);
     }
 
-    function gameStart(type, attack, coins, worldState) {
-        flashScreen();
-        setTimeout(() => {
-            worldState.playerCoins = coins;
-            worldState.attack = attack;
-            go(type, worldState);
-        }, 1500);
-    }
-
     function startBlackjack(damageDealt) {
         worldState.enemyHP = enemyMonHealthBar.width;
         worldState.playerHP = playerMonHealthBar.width;
@@ -152,7 +151,7 @@ function setBattle(worldState) {
         if (playerMon.fainted || enemyMon.fainted) return;
         
         if (worldState.returnFromBlackjack && phase === 'player-selection') {
-            worldState.returnFromBlackjack = false;
+            pendingReturnedAttack = false;
             handlePlayerAttack();
             return;
         }
@@ -170,8 +169,8 @@ function setBattle(worldState) {
             content.text = `Playing ${choice.toLowerCase()}...`;
 
             if (choice === 'Blackjack') {
-                attack = Math.random() * 150;
-                worldState.baseAttack = attack;
+                attack = getRandomIntInclusive(0, 200);
+                worldState.attack = attack;
                 startBlackjack(attack);
                 return;
             } else if (choice === 'Roulette') {
@@ -190,11 +189,11 @@ function setBattle(worldState) {
 
         if (phase === 'enemy-turn') {
             content.text = `${(worldState.enemyName).toUpperCase()}MON attacks!`;
-            const Attack = Math.random() * 100;
-            if (Attack > 67) {
+            const attack = Math.random() * 100;
+            if (attack > 67) {
                 content.text = "It's a critical hit!";
             }
-            reduceHealth(playerMonHealthBar, Attack);
+            reduceHealth(playerMonHealthBar, attack);
             damageEffect(playerMon);
             phase = 'player-selection';
             return;
