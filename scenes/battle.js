@@ -204,7 +204,6 @@ function setBattle(worldState) {
 
             const choice = menuOptions[selectedMenu];
             menuActive = false;
-            // content.text = `Playing ${choice.toLowerCase()}...`;
 
             if (choice === 'Blackjack') {
                 attack = getRandomIntInclusive(0, 150);
@@ -215,18 +214,25 @@ function setBattle(worldState) {
                 startDino();
                 return;
             } else if (choice === 'Tackle') {
+                if (playerCoins < 3) {
+                    content.text = "Not enough coins (need 3).";
+                    phase = 'player-selection';
+                    return;
+                }
+                playerCoins -= 3;
+                worldState.playerCoins = playerCoins;
+                coinsLabel.text = playerCoins;
                 attack = getRandomIntInclusive(50, 250);
-                coins -= 3;
+                worldState.attack = attack;
                 phase = 'player-turn';
-
+                handlePlayerAttack();
+                return;
             } else {
                 attack = getRandomIntInclusive(0, 150);
                 worldState.attack = attack;
                 startBlackjack(attack);
                 return;
             }
-            phase = 'player-turn';
-            return;
         }
         
         if (phase === 'player-turn') {

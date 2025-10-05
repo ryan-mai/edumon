@@ -4,7 +4,9 @@ function setWorld(worldState) {
         return [sprite('tile'), {type}]
     }
 
-    let coins = 3;
+    let coins = (worldState && typeof worldState.playerCoins === 'number')
+        ? worldState.playerCoins
+        : 3;
 
     const map = [
         addLevel(
@@ -146,6 +148,19 @@ function setWorld(worldState) {
     const grassMon = add([sprite('mini-mons'), area(), body({isStatic: true}), pos(900, 570), scale(4), 'grass']);
     grassMon.play('grass');
     
+    const eggyMon = add([
+        sprite('mini-mons'),
+        area(),
+        body({ isStatic: true }),
+        pos(780, 430),
+        scale(4),
+        'eggy'
+    ]);
+    eggyMon.play('eggy');
+
+    const obsidianMon = add([sprite('mini-mons'), area(), body({isStatic: true}), pos(800, 190), scale(4), 'obsidian']);
+    obsidianMon.play('obsidian');
+    
     const npc = add([sprite('npc'), area(), body({isStatic: true}), pos(600, 700), scale(4), 'npc']);
 
     const player = add([sprite('player-down'), pos(500, 700), scale(4), area(), body(),
@@ -254,13 +269,13 @@ function setWorld(worldState) {
             fixed()
         ]);
         if (!worldState.faintedMons) worldState.faintedMons = [];
-        if (worldState.faintedMons.length < 4) {
-            content.text = dialogue
+        if (worldState.faintedMons.length < 6) {
+            content.text = dialogue;
         } else {
-            if (worldState.playercoins >= 5) {
-                content.text = "Congrats you won!"
+            if (coins >= 5) {
+                content.text = "Congrats you won!";
             } else {
-                content.text = "You are now a homeless comp sci student..."
+                content.text = "You are now a homeless comp sci student...";
             }
         }
 
@@ -269,12 +284,13 @@ function setWorld(worldState) {
                 if (firstTime) {
                     firstTime = false;
                     coins += 3;
-                    content.text = 'Here\'s some coins to start your journey!'
-                    coinsLabel.text = `${coins}`
+                    worldState.playerCoins = coins;
+                    coinsLabel.text = `${coins}`;
+                    content.text = 'Here\'s some coins to start your journey!';
                 }
                 destroy(dialogueBox);
                 player.isInDialogue = false;
-            })
+            });
             if (isKeyDown('space')) {
                 destroy(dialogueBox);
                 player.isInDialogue = false;
@@ -285,6 +301,7 @@ function setWorld(worldState) {
     player.onCollide('coin', (c) => {
         destroy(c);
         coins += 1;
+        worldState.playerCoins = coins;
         coinsLabel.text = `${coins}`;
         player.isInDialogue = true;
         const dialogueBoxFixedContainer = add([fixed()])
@@ -327,5 +344,7 @@ function setWorld(worldState) {
     onCollideWithPlayer('spider', player, worldState);
     onCollideWithPlayer('centipede', player, worldState);
     onCollideWithPlayer('grass', player, worldState);
+    onCollideWithPlayer('eggy', player, worldState);
+    onCollideWithPlayer('obsidian', player, worldState);
 
 }

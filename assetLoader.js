@@ -16,6 +16,9 @@ function loadAssets() {
     "spider-mon": { x: 32, y: 16, width: 32, height: 32 },
     "centipede-mon": { x: 64, y: 16, width: 32, height: 32 },
     "grass-mon": { x: 0, y: 49, width: 32, height: 32 },
+    "spectral-mon": { x: 64, y: 49, width: 32, height: 32 },
+    "obsidian-mon": {x: 96, y: 49, width: 32, height: 32 },
+    "eggy-mon": {x: 96, y: 16, width: 32, height: 32 },
     "mushroom-mon": { x: 32, y: 49, width: 32, height: 32 },
     "mini-mons": {
       x: 0,
@@ -24,7 +27,7 @@ function loadAssets() {
       height: 16,
       sliceX: 8,
       sliceY: 1,
-      anims: { spider: 1, centipede: 2, grass: 3 },
+      anims: { spider: 1, centipede: 2, grass: 3, eggy: 4, obsidian: 5, spectral: 6 },
     },
   }),
   loadSprite("battle-background", "./assets/battle-background.png"),
