@@ -1,5 +1,8 @@
 function setBattle(worldState) {
     add([sprite('battle-background'), scale(1.3), pos(0, 0), 'background']);
+    
+    let phase = worldState.phase || 'player-selection'
+    let attack = worldState.attack || 0;
 
     const enemyMon = add([sprite(worldState.enemyName + '-mon'), scale(5), pos(1300, 100), opacity(1), {fainted: false}]);
     enemyMon.flipX = true;
@@ -20,7 +23,6 @@ function setBattle(worldState) {
 
     tween(playerMonHealthBox.pos.x, 850, 0.3, (val) => playerMonHealthBox.pos.x = val, easings.easeInSine);
 
-    let playerCoins = worldState.coins;
 
     const enemyMonHealthBox = add([rect(400, 100), outline(4), pos(850, 50)]);
 
@@ -32,10 +34,21 @@ function setBattle(worldState) {
     
     tween(enemyMonHealthBox.pos.x, 100, 0.3, (val) => enemyMonHealthBox.pos.x = val, easings.easeInSine);
 
+    if (worldState.playerHP !== undefined) playerMonHealthBar.width = worldState.playerHP;
+    if (worldState.enemyHP !== undefined) playerMonHealthBar.width = worldState.enemyHP;
+
+    let playerCoins = worldState.coins || 0;
+
     const box = add([rect(1300, 300), outline(4), pos(-2, 530)]);
-    const content = box.add([text('MUSHROOM is fired up to gamble!', {size: 32}, {lineSpacing: 8}), color(10, 10, 10), pos(20, 20)])
+    const content = box.add([text('', {size: 32}, {lineSpacing: 8}), color(10, 10, 10), pos(20, 20)])
 
     // tween(box.pos.y, 530, 0.3, (val) => box.pos.y = val, easings.easeInSine);
+
+    if (worldState.returnFromBlackjack) {
+        content.text = 'Well, then let\'s continue! (Space)';
+    } else {
+        content.text = 'MUSHY is fired up to attack!';
+    }
 
     function reduceHealth(healthBar, damageDealt) {
         tween(
@@ -66,10 +79,6 @@ function setBattle(worldState) {
         const maxFloored = Math.floor(max);
         return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled); 
     }
-
-    
-    let phase = 'player-selection'
-    let attack = 0;
 
     const menuOptions = ['Blackjack', 'Roulette', 'Slots'];
     let menuActive = false;
@@ -103,16 +112,58 @@ function setBattle(worldState) {
             go(type, worldState);
         }, 1500);
     }
+
+    function startBlackjack(damageDealt) {
+        worldState.enemyHP = enemyMonHealthBar.width;
+        worldState.playerHP = playerMonHealthBar.width;
+        worldState.phase = 'player-turn';
+        worldState.attack = damageDealt;
+        worldState.coins = playerCoins;
+        worldState.returnFromBlackjack = false;
+        flashScreen();
+        setTimeout(() => {
+            go('blackjack', worldState);
+        }, 500);
+    }
+
+    function handlePlayerAttack() {
+        content.text = `${attack.toFixed(0)} damage!`
+        if (attack > 100) {
+            content.text = "It's a critical hit!";
+        }
+        if (enemyMonHealthBar.width - attack > 400) {
+            content.text = `${(worldState.enemyName).toUpperCase()}MON thanks you for healing them!`;
+            tween(
+                enemyMonHealthBar.width,
+                370,
+                0.5,
+                (val) => enemyMonHealthBar.width = val, easings.easeInSine
+            );
+        } else {
+            reduceHealth(enemyMonHealthBar, attack);
+        }
+        damageEffect(enemyMon);
+        worldState.attack = 0;
+        attack = 0;
+        phase = 'enemy-turn';
+    }
+    
     onKeyPress('space', () => {
         if (playerMon.fainted || enemyMon.fainted) return;
         
+        if (worldState.returnFromBlackjack && phase === 'player-selection') {
+            worldState.returnFromBlackjack = false;
+            handlePlayerAttack();
+            return;
+        }
+        
         if (phase === 'player-selection') {
             if (!menuActive) {
-                menuActive = true;
-                selectedMenu = 0;
-                content.text = renderMenu();
-                return;
-            }
+                    menuActive = true;
+                    selectedMenu = 0;
+                    content.text = renderMenu();
+                    return;
+                }
 
             const choice = menuOptions[selectedMenu];
             menuActive = false;
@@ -120,8 +171,9 @@ function setBattle(worldState) {
 
             if (choice === 'Blackjack') {
                 attack = Math.random() * 150;
-                gameStart('blackjack', attack, playerCoins, worldState);
-
+                worldState.baseAttack = attack;
+                startBlackjack(attack);
+                return;
             } else if (choice === 'Roulette') {
                 attack = getRandomIntInclusive(-50, 150);
             } else {
@@ -130,26 +182,9 @@ function setBattle(worldState) {
             phase = 'player-turn';
             return;
         }
-
-        debug.log(attack)
+        
         if (phase === 'player-turn') {
-            content.text = `${attack}`;
-            if (attack > 100) {
-                content.text = "It's a critical hit!";
-            }
-            if (enemyMonHealthBar.width - attack > 400) {
-                content.text = `${(worldState.enemyName).toUpperCase()}MON thanks you for the healing!`;
-                tween(
-                    enemyMonHealthBar.width,
-                    370,
-                    0.5,
-                    (val) => enemyMonHealthBar.width = val, easings.easeInSine
-                );
-            } else {
-                reduceHealth(enemyMonHealthBar, attack);
-            }
-            damageEffect(enemyMon);
-            phase = 'enemy-turn';
+            handlePlayerAttack();
             return;
         }
 
@@ -197,12 +232,12 @@ function setBattle(worldState) {
 
             setTimeout(() => {
                 content.text = 'MUSHY has won the battle!';
-            }, 1000);
+            }, 800);
 
             setTimeout(() => {
                 worldState.faintedMons.push(worldState.enemyName);
                 go('world', worldState);
-            }, 2000);
+            }, 1600);
         }
         else if (playerMonHealthBar.width < 0 && !playerMon.fainted) {
             makeMonDrop(playerMon);
@@ -216,7 +251,7 @@ function setBattle(worldState) {
             setTimeout(() => {
                 worldState.playerPos = vec2(500, 700);
                 go('world', worldState);
-            }, 2000);
+            }, 1600);
         }
     });
 }
