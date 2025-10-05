@@ -1,11 +1,25 @@
 function setBlackjack(worldState) {
     add([sprite('battle-background'), scale(1.3), pos(0, 0), 'background']);
 
+    let coins = worldState.playerCoins
     const values = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
     const suits = ['club', 'diamond', 'heart', 'spade'];
-    const deck = shuffleDeck(buildDeck());
+    const deck = shuffleDeck(createDeck());
     const playerHand = [];
     const dealerHand = [];
+
+    dealCards(deck, playerHand, dealerHand);
+    debug.log(`Player: ${playerHand} | Dealer: ${dealerHand}`)
+
+    for (let i = 0; i < playerHand.length; i++) {
+        debug.log(i)
+        add([sprite('cards', {anim: playerHand[i]}), scale(2.5), pos(550 + i * 150, 500)]);
+        if (i == 1) {
+            add([sprite('cards', {anim: 'face-down'}), scale(2.5), pos(550 + i * 150, 200)]);
+        } else {
+            add([sprite('cards', {anim: dealerHand[i]}), scale(2.5), pos(550, 200)]);
+        }
+    }
     function createDeck() {
         const deck = [];
         for (const value of values) {
