@@ -67,7 +67,7 @@ function setDino(worldState) {
 
     player.onCollide("tree", () => {
         const attack = Math.min(250, Math.floor(score / 8));
-        if (score > 1000) coins += 3;
+        if (score > 2100) worldState.playerCoins += 3;
         worldState.attack = attack;
         worldState.phase = "player-turn";
         worldState.returnFromDino = true;
